@@ -16,22 +16,18 @@ struct Home: View {
         ScrollView(.vertical, showsIndicators: false) {
             
             VStack(spacing: 15){
+                
                 //MARK: Search Bar
-                HStack(spacing: 15){
-                    Image(systemName: "magnifyingglass")
-                        .font(.title)
-                        .foregroundColor(.gray)
+                ZStack{
                     
-                    //Since we need a separate view for search bar
-                    TextField("Search" , text: .constant(""))
-                        .disabled(true)
+                    if homeData.searchActivated{
+                        SearchBar()
+                    }
+                    else{
+                        SearchBar()
+                            .matchedGeometryEffect(id: "SEARCHBAR", in: animation)
+                    }
                 }
-                .padding(.vertical, 12)
-                .padding(.horizontal)
-                .background(
-                    Capsule()
-                        .strokeBorder(Color.gray, lineWidth: 0.8)
-                )
                 .frame(width: getRect().width / 1.6)
                 .padding(.horizontal, 25)
                 
@@ -40,6 +36,12 @@ struct Home: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top)
                     .padding(.horizontal, 25)
+                    .contentShape(Rectangle())
+                    .onTapGesture{
+                        withAnimation(.easeInOut){
+                            homeData.searchActivated = true
+                        }
+                    }
                 
                 //MARK: Products Tab
                 ScrollView (.horizontal, showsIndicators: false){
@@ -76,10 +78,22 @@ struct Home: View {
                 //This Button will show all products on the current product type
                 //since here we're showing only 4
                 Button{
-                    
+                    homeData.showMoreProductsOnType.toggle()
                 }label: {
                     
+                    //Since we need image ar right
+                    Label{
+                        Image(systemName: "arrow.right")
+                    } icon: {
+                        Text("see more")
+                        
+                    }
+                    .font(.custom(customFont, size: 15 ).bold())
+                    .foregroundColor(Color("Purple"))
+                    
                 }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.top, 10)
             }
             .padding(.vertical)
         }
@@ -89,7 +103,44 @@ struct Home: View {
         .onChange(of: homeData.productType){ newValue in
             homeData.filterProductByType()
         }
+        //Preview Issue
+        .sheet(isPresented: $homeData.showMoreProductsOnType){
+            
+        }content: {
+            MoreProductsView()
+        }
+        //Display Seach View..
+        .overlay(
+            ZStack{
+                
+                if homeData.searchActivated{
+                    SearchView(animation: animation)
+                        .environmentObject(homeData)
+                }
+            }
+        )
     }
+    
+    //MARK: Search Bar
+    @ViewBuilder
+    func SearchBar()->some View {
+        HStack(spacing: 15){
+            Image(systemName: "magnifyingglass")
+                .font(.title)
+                .foregroundColor(.gray)
+            
+            //Since we need a separate view for search bar
+            TextField("Search" , text: .constant(""))
+                .disabled(true)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal)
+        .background(
+            Capsule()
+                .strokeBorder(Color.gray, lineWidth: 0.8)
+        )
+    }
+    
     
     @ViewBuilder
     func ProductCardView(product: Product)->some View{

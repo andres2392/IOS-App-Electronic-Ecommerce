@@ -21,7 +21,7 @@ struct MainPage: View {
             //Tab view
             TabView(selection: $currentTab){
                 
-                Text("Home")
+                Home()
                     .tag(Tab.Home)
 
                 Text("Liked")
@@ -64,6 +64,7 @@ struct MainPage: View {
             .padding([.horizontal, .top])
             .padding(.bottom, 10)
         }
+        .background(Color("HomeBG").ignoresSafeArea())
     }
 }
 
