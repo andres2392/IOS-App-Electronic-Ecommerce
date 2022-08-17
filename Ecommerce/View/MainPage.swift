@@ -8,63 +8,90 @@
 import SwiftUI
 
 struct MainPage: View {
-    //Current tab
+    // Current Tab...
     @State var currentTab: Tab = .Home
     
-    //Hiding Tab Bar
+    @StateObject var sharedData: SharedDataModel = SharedDataModel()
+    
+    // Animation Namespace...
+    @Namespace var animation
+    
+    // Hiding Tab Bar...
     init(){
         UITabBar.appearance().isHidden = true
     }
     var body: some View {
         
         VStack(spacing: 0){
-            //Tab view
-            TabView(selection: $currentTab){
+            
+            // Tab View...
+            TabView(selection: $currentTab) {
                 
-                Home()
+                Home(animation: animation)
+                    .environmentObject(sharedData)
                     .tag(Tab.Home)
-
-                Text("Liked")
+                
+                LikedPage()
+                    .environmentObject(sharedData)
                     .tag(Tab.Liked)
-
-                Text("Profile")
+                
+                ProfilePage()
                     .tag(Tab.Profile)
-
-                Text("Cart")
+                
+                CartPage()
+                    .environmentObject(sharedData)
                     .tag(Tab.Cart)
             }
-            //MARK: Custom Tab Bar
+            
+            // Custom Tab Bar...
             HStack(spacing: 0){
-                ForEach(Tab.allCases, id: \.self){tab in
-                    Button{
-                        //Updating Tab
+                ForEach(Tab.allCases,id: \.self){tab in
+                    
+                    Button {
+                        // updating tab...
                         currentTab = tab
-                        
-                    }label: {
+                    } label: {
+                     
                         Image(tab.rawValue)
                             .resizable()
                             .renderingMode(.template)
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 22, height: 22)
-                            //applying little shadow at bg
+                        // Applying little shadow at bg...
                             .background(
                             
                                 Color("Purple")
                                     .opacity(0.1)
                                     .cornerRadius(5)
+                                // blurring...
                                     .blur(radius: 5)
+                                // Making little big...
                                     .padding(-7)
                                     .opacity(currentTab == tab ? 1 : 0)
+                                
                             )
                             .frame(maxWidth: .infinity)
                             .foregroundColor(currentTab == tab ? Color("Purple") : Color.black.opacity(0.3))
                     }
                 }
             }
-            .padding([.horizontal, .top])
-            .padding(.bottom, 10)
+            .padding([.horizontal,.top])
+            .padding(.bottom,10)
         }
         .background(Color("HomeBG").ignoresSafeArea())
+        .overlay(
+        
+            ZStack{
+                // Detail Page...
+                if let product = sharedData.detailProduct,sharedData.showDetailProduct{
+                    
+                    ProductDetailView(product: product, animation: animation)
+                        .environmentObject(sharedData)
+                    // adding transitions...
+                        .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .opacity))
+                }
+            }
+        )
     }
 }
 
@@ -74,10 +101,11 @@ struct MainPage_Previews: PreviewProvider {
     }
 }
 
-//MARK: Tab cases
-enum Tab: String, CaseIterable {
+// Making Case Iteratable...
+// Tab Cases...
+enum Tab: String,CaseIterable{
     
-    //Raw values must be image name in asset
+    // Raw Value must be image Name in asset..
     case Home = "Home"
     case Liked = "Liked"
     case Profile = "Profile"

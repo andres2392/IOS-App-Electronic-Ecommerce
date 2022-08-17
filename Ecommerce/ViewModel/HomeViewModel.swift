@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+//Using combine to monitor search field and if user leaves for .5 secs then start searching to avoid memory issues
+import Combine
 
 class HomeViewModel: ObservableObject {
 
@@ -38,14 +40,28 @@ class HomeViewModel: ObservableObject {
     //Search Data
     @Published var searchText: String = ""
     @Published var searchActivated: Bool = false
+    @Published var searchedProducts: [Product]?
+    
+    var searchCancellable: AnyCancellable?
     
     init(){
         filterProductByType()
+        
+        searchCancellable = $searchText.removeDuplicates()
+            .debounce(for: 0.5, scheduler: RunLoop.main)
+            .sink(receiveValue: { str in
+                if str != ""{
+                    self.filterProductBySearch()
+                }else {
+                    self.searchedProducts = nil
+                }
+                
+            })
     }
     
     func filterProductByType(){
         
-        // Filtering Product By Product Type...
+        //MARK: Filtering Product By Product Type...
         DispatchQueue.global(qos: .userInteractive).async {
             
             let results = self.products
@@ -66,5 +82,26 @@ class HomeViewModel: ObservableObject {
             }
         }
     }
+    
+    func filterProductBySearch(){
+        
+        // Filtering Product By Product Type...
+        DispatchQueue.global(qos: .userInteractive).async {
+            
+            let results = self.products
+            // Since it will require more memory so were using lazy to perform more...
+                .lazy
+                .filter { product in
+                    
+                    return product.title.lowercased().contains(self.searchText.lowercased())
+                }
+            
+            DispatchQueue.main.async {
+                
+                self.searchedProducts = results.compactMap({ product in
+                    return product
+                })
+            }
+        }
+    }
 }
-
